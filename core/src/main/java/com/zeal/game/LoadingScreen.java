@@ -47,7 +47,7 @@ public class LoadingScreen implements Screen {
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
-        }).thenRun(() -> Gdx.app.postRunnable(() -> game.setScreen(new FirstScreen(game, host))))
+        }).thenRun(() -> Gdx.app.postRunnable(() -> game.setScreen(new GameMainScreen(game, host))))
           .exceptionally(throwable -> {
               Gdx.app.postRunnable(() -> showError(throwable.getCause() == null ? throwable.getMessage() : throwable.getCause().getMessage()));
               return null;

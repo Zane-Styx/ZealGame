@@ -18,7 +18,7 @@ import com.zeal.game.ui.PauseUI;
 import com.zeal.game.settings.Settings;
 
 /** First screen of the application. Displayed after the application is created. */
-public class FirstScreen implements Screen {
+public class GameMainScreen implements Screen {
     private final Game game;
     private final Stage stage;
     private final ChatUI chatUI;
@@ -27,7 +27,7 @@ public class FirstScreen implements Screen {
     private InputMultiplexer inputMultiplexer;
     // PauseUI is a static helper now; we call PauseUI.show(...) when needed.
 
-    public FirstScreen(Game game, String host) {
+    public GameMainScreen(Game game, String host) {
         this.game = game;
         // Create stage with a viewport
         stage = new Stage(new ScreenViewport());

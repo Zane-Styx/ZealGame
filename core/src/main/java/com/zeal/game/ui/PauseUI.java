@@ -11,28 +11,10 @@ import com.zeal.game.settings.Settings;
  */
 public final class PauseUI {
     private PauseUI() {}
+    final static Skin skin = loadSkin();
+    static Dialog dialog = new Dialog("Paused", skin)    ;
 
-    // Track the currently shown pause dialog so repeated calls to show()
-    // don't create multiple stacked dialogs.
-    private static Dialog currentDialog = null;
-
-    /**
-     * Returns true if a pause dialog is currently visible.
-     */
-    public static boolean isShowing() {
-        return currentDialog != null && currentDialog.isVisible();
-    }
-
-    /**
-     * Hide the currently shown pause dialog, if any.
-     */
-    public static void hide() {
-        if (currentDialog != null) {
-            currentDialog.hide();
-            // hide() override will clear currentDialog, but ensure null just in case
-            currentDialog = null;
-        }
-    }
+    // UIManager will manage which dialogs are visible; PauseUI delegates to it.
 
     private static Skin loadSkin() {
         try {
@@ -50,23 +32,14 @@ public final class PauseUI {
      */
     public static void show(Stage stage, Settings settings, Runnable onMainMenu) {
         com.badlogic.gdx.Gdx.app.log("PauseUI", "show() called - creating pause dialog");
-        final Skin skin = loadSkin();
 
-        // If a pause dialog is already visible, bring it to front and do nothing.
-        if (currentDialog != null && currentDialog.isVisible()) {
-            currentDialog.toFront();
-            return;
-        }
-
-        // Create a dialog and override hide() so we can clear the currentDialog reference
-        final Dialog dialog = new Dialog("Paused", skin) {
+        dialog = new Dialog("Paused", skin) {
             @Override
             public void hide() {
                 super.hide();
-                currentDialog = null;
+                UIManager.dialogHidden(this);
             }
         };
-        currentDialog = dialog;
         dialog.getContentTable().pad(10);
         dialog.getContentTable().add(new Label("Game paused", skin)).row();
 
@@ -77,35 +50,23 @@ public final class PauseUI {
         resume.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
-                dialog.hide();
+                // close the pause dialog via UIManager
+                UIManager.closeCurrent();
             }
         });
 
         settingsBtn.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
-                // show settings dialog
-                Dialog s = new Dialog("Settings", skin);
-                final TextField usernameField = new TextField(settings.getUsername(), skin);
-                s.getContentTable().add(new Label("Username:", skin)).left();
-                s.getContentTable().add(usernameField).width(250).row();
-                TextButton save = new TextButton("Save", skin);
-                save.addListener(new ChangeListener() {
-                    @Override
-                    public void changed(ChangeEvent event, Actor actor) {
-                        settings.setUsername(usernameField.getText().trim());
-                        s.hide();
-                    }
-                });
-                s.getButtonTable().add(save);
-                s.show(stage);
+                // Use centralized SettingsUI for in-game settings (placeholder for more options)
+                SettingsUI.showForInGame(stage, settings);
             }
         });
 
         mainMenu.addListener(new ChangeListener() {
             @Override
             public void changed(ChangeEvent event, Actor actor) {
-                dialog.hide();
+                UIManager.closeCurrent();
                 if (onMainMenu != null) onMainMenu.run();
             }
         });
@@ -113,6 +74,16 @@ public final class PauseUI {
         dialog.getButtonTable().add(resume).pad(6);
         dialog.getButtonTable().add(settingsBtn).pad(6);
         dialog.getButtonTable().add(mainMenu).pad(6);
-        dialog.show(stage);
+        UIManager.openDialog(dialog, stage);
+    }
+
+    public static void hide() {
+        // Delegate hide to UIManager so the dialog stack is maintained correctly.
+        UIManager.closeCurrent();
+    }
+
+    public static boolean isShowing() {
+        // Backwards-compat shim: delegate to UIManager
+        return UIManager.isShowing();
     }
 }
